@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Manager</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        h1 {
+            text-align: center;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+        }
+        form {
+            margin-bottom: 20px;
+        }
+        input, textarea, button {
+            display: block;
+            width: 100%;
+            margin-bottom: 10px;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .task-list {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        .task-list th, .task-list td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+        .task-list th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Task Manager</h1>
+
+        <!-- Form to Add a New Task -->
+        <form id="addTaskForm">
+            <h2>Add New Task</h2>
+            <input type="text" id="title" placeholder="Title" required>
+            <textarea id="description" placeholder="Description" required></textarea>
+            <select id="status">
+                <option value="pending">Pending</option>
+                <option value="completed">Completed</option>
+            </select>
+            <button type="submit">Add Task</button>
+        </form>
+
+        <!-- Form to Update a Task -->
+        <form id="updateTaskForm">
+            <h2>Update Task</h2>
+            <input type="number" id="taskId" placeholder="Task ID" required>
+            <input type="text" id="updateTitle" placeholder="Title">
+            <textarea id="updateDescription" placeholder="Description"></textarea>
+            <select id="updateStatus">
+                <option value="pending">Pending</option>
+                <option value="completed">Completed</option>
+            </select>
+            <button type="submit">Update Task</button>
+        </form>
+
+        <!-- Form to Delete a Task -->
+        <form id="deleteTaskForm">
+            <h2>Delete Task</h2>
+            <input type="number" id="deleteTaskId" placeholder="Task ID" required>
+            <button type="submit">Delete Task</button>
+        </form>
+
+        <!-- Task List -->
+        <h2>Task List</h2>
+        <table class="task-list" id="taskList">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Title</th>
+                    <th>Description</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Tasks will be dynamically inserted here -->
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const apiUrl = 'http://localhost/api'; // URL to your API
+
+            // Function to fetch tasks and update the task list
+            function fetchTasks() {
+                fetch(`${apiUrl}/tasks`)
+                    .then(response => response.json())
+                    .then(data => {
+                        const tbody = document.querySelector('#taskList tbody');
+                        tbody.innerHTML = '';
+                        data.forEach(task => {
+                            const row = document.createElement('tr');
+                            row.innerHTML = `
+                                <td>${task.id}</td>
+                                <td>${task.title}</td>
+                                <td>${task.description}</td>
+                                <td>${task.status}</td>
+                            `;
+                            tbody.appendChild(row);
+                        });
+                    })
+                    .catch(error => console.error('Error fetching tasks:', error));
+            }
+
+            // Add Task
+            document.querySelector('#addTaskForm').addEventListener('submit', event => {
+                event.preventDefault();
+                const title = document.querySelector('#title').value;
+                const description = document.querySelector('#description').value;
+                const status = document.querySelector('#status').value;
+
+                fetch(`${apiUrl}/tasks`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ title, description, status })
+                })
+                .then(response => response.json())
+                .then(() => {
+                    alert('Task added successfully');
+                    fetchTasks();
+                })
+                .catch(error => console.error('Error adding task:', error));
+            });
+
+            // Update Task
+            document.querySelector('#updateTaskForm').addEventListener('submit', event => {
+                event.preventDefault();
+                const id = document.querySelector('#taskId').value;
+                const title = document.querySelector('#updateTitle').value;
+                const description = document.querySelector('#updateDescription').value;
+                const status = document.querySelector('#updateStatus').value;
+
+                fetch(`${apiUrl}/tasks/${id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ title, description, status })
+                })
+                .then(response => response.json())
+                .then(() => {
+                    alert('Task updated successfully');
+                    fetchTasks();
+                })
+                .catch(error => console.error('Error updating task:', error));
+            });
+
+            // Delete Task
+            document.querySelector('#deleteTaskForm').addEventListener('submit', event => {
+                event.preventDefault();
+                const id = document.querySelector('#deleteTaskId').value;
+
+                fetch(`${apiUrl}/tasks/${id}`, {
+                    method: 'DELETE'
+                })
+                .then(response => response.json())
+                .then(() => {
+                    alert('Task deleted successfully');
+                    fetchTasks();
+                })
+                .catch(error => console.error('Error deleting task:', error));
+            });
+
+            // Initial fetch of tasks
+            fetchTasks();
+        });
+    </script>
+</body>
+</html>
