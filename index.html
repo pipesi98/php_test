@@ -1,196 +1,230 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
-    
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Task Manager</title>
+    <title>Gestión de Tareas</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            margin: 20px;
         }
-        h1 {
-            text-align: center;
-        }
-        .container {
-            max-width: 600px;
-            margin: auto;
-        }
-        form {
+        .task-form, .task-list {
             margin-bottom: 20px;
         }
-        input, textarea, button {
-            display: block;
-            width: 100%;
-            margin-bottom: 10px;
-            padding: 8px;
-            box-sizing: border-box;
-        }
-        button {
-            background-color: #007BFF;
-            color: white;
-            border: none;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #0056b3;
-        }
-        .task-list {
-            border-collapse: collapse;
-            width: 100%;
-        }
-        .task-list th, .task-list td {
+        .task-item {
             border: 1px solid #ddd;
-            padding: 8px;
+            padding: 10px;
+            margin-bottom: 10px;
         }
-        .task-list th {
-            background-color: #f2f2f2;
+        .task-item h3 {
+            margin: 0;
+        }
+        .task-item button {
+            margin-right: 10px;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Task Manager</h1>
 
-        <!-- Form to Add a New Task -->
-        <form id="addTaskForm">
-            <h2>Add New Task</h2>
-            <input type="text" id="title" placeholder="Title" required>
-            <textarea id="description" placeholder="Description" required></textarea>
-            <select id="status">
-                <option value="pending">Pending</option>
-                <option value="completed">Completed</option>
-            </select>
-            <button type="submit">Add Task</button>
-        </form>
+    <h1>Gestión de Tareas</h1>
 
-        <!-- Form to Update a Task -->
-        <form id="updateTaskForm">
-            <h2>Update Task</h2>
-            <input type="number" id="taskId" placeholder="Task ID" required>
-            <input type="text" id="updateTitle" placeholder="Title">
-            <textarea id="updateDescription" placeholder="Description"></textarea>
-            <select id="updateStatus">
-                <option value="pending">Pending</option>
-                <option value="completed">Completed</option>
-            </select>
-            <button type="submit">Update Task</button>
-        </form>
+    <!-- Formulario para crear una nueva tarea -->
+    <div class="task-form">
+        <h2>Crear nueva tarea</h2>
+        <input type="text" id="task-title" placeholder="Título" required>
+        <input type="text" id="task-desc" placeholder="Descripción" required>
+        <select id="task-status">
+            <option value="pending">Pendiente</option>
+            <option value="completed">Completada</option>
+        </select>
+        <button onclick="createTask()">Crear Tarea</button>
+    </div>
 
-        <!-- Form to Delete a Task -->
-        <form id="deleteTaskForm">
-            <h2>Delete Task</h2>
-            <input type="number" id="deleteTaskId" placeholder="Task ID" required>
-            <button type="submit">Delete Task</button>
-        </form>
+    <!-- Input y botón para eliminar tarea por ID -->
+    <div class="task-delete">
+        <h2>Eliminar tarea por ID</h2>
+        <input type="number" id="id-task" placeholder="ID de la tarea">
+        <button onclick="deleteTaskById()">Eliminar Tarea</button>
+    </div>
 
-        <!-- Task List -->
-        <h2>Task List</h2>
-        <table class="task-list" id="taskList">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Title</th>
-                    <th>Description</th>
-                    <th>Status</th>
-                </tr>
-            </thead>
-            <tbody>
-                <!-- Tasks will be dynamically inserted here -->
-            </tbody>
-        </table>
+    <div class="task-edit">
+        <h2>Editar tarea</h2>
+        <input type="number" id="edit-id" placeholder="ID de la tarea" required>
+        <input type="text" id="edit-title" placeholder="Nuevo Título">
+        <input type="text" id="edit-desc" placeholder="Nueva Descripción">
+        <select id="edit-status">
+            <option value="pending">Pendiente</option>
+            <option value="completed">Completada</option>
+        </select>
+        <button onclick="updateTask()">Actualizar Tarea</button>
+    </div>
+
+    <!-- Lista de tareas -->
+    <div class="task-list">
+        <h2>Lista de tareas</h2>
+        <p id="tasks-p"></p>
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const apiUrl = 'http://localhost/api'; // URL to your API
+        const apiBaseUrl = 'index.php'; // Cambia esta URL según tu configuración de backend
+        fetchTasks();
+        // Función para obtener todas las tareas
+        function fetchTasks() {
+        fetch(apiBaseUrl)
+        .then(response => response.text()) // Primero obtenemos la respuesta como texto
+        .then(text => {
+            console.log(text); // Verifica el texto crudo
+            try {
+                //json.stringify(text)
+                const data = JSON.stringify(text); // Convertimos el texto a JSON
+                console.log(typeof(data))
+                console.log('Parsed Data:', data); // Verifica el JSON parseado
 
-            // Function to fetch tasks and update the task list
-            function fetchTasks() {
-                fetch(`${apiUrl}/tasks`)
+                document.getElementById('tasks-p').textContent=text
+
+
+            } catch (error) {
+                console.error('Error parsing JSON:', error);
+                alert('Ocurrió un error al procesar los datos.');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Ocurrió un error al obtener las tareas.');
+        });
+}
+        // Función para crear una nueva tarea
+        function createTask() {
+            console.log('Crear')
+            const title = document.getElementById('task-title').value;
+            const description = document.getElementById('task-desc').value;
+            const status = document.getElementById('task-status').value;
+
+            const taskData = {
+                title: title,
+                description: description,
+                status: status
+            };
+
+            fetch(apiBaseUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(taskData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert('Tarea creada exitosamente');
+                fetchTasks(); // Recargar la lista de tareas
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Ocurrió un error al crear la tarea.');
+            });
+        }
+        // Función para eliminar una tarea por ID
+        function deleteTaskById() {
+            const id = document.getElementById('id-task').value;
+            if (id) {
+                if (confirm('¿Estás seguro de que deseas eliminar esta tarea?')) {
+                    fetch(`${apiBaseUrl}/${id}`, {
+                        method: 'DELETE',
+                    })
                     .then(response => response.json())
                     .then(data => {
-                        const tbody = document.querySelector('#taskList tbody');
-                        tbody.innerHTML = '';
-                        data.forEach(task => {
-                            const row = document.createElement('tr');
-                            row.innerHTML = `
-                                <td>${task.id}</td>
-                                <td>${task.title}</td>
-                                <td>${task.description}</td>
-                                <td>${task.status}</td>
-                            `;
-                            tbody.appendChild(row);
-                        });
+                        if (data.error) {
+                            alert(`Error: ${data.error}`);
+                        } else {
+                            alert('Tarea eliminada');
+                            fetchTasks(); // Recargar la lista de tareas
+                        }
                     })
-                    .catch(error => console.error('Error fetching tasks:', error));
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Ocurrió un error al eliminar la tarea.');
+                    });
+                }
+            } else {
+                alert('Por favor ingresa un ID válido.');
             }
-
-            // Add Task
-            document.querySelector('#addTaskForm').addEventListener('submit', event => {
-                event.preventDefault();
-                const title = document.querySelector('#title').value;
-                const description = document.querySelector('#description').value;
-                const status = document.querySelector('#status').value;
-
-                fetch(`${apiUrl}/tasks`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ title, description, status })
+        }
+        // Función para eliminar una tarea
+        function deleteTask(id) {
+            if (confirm('¿Estás seguro de que deseas eliminar esta tarea?')) {
+                fetch(`${apiBaseUrl}/${id}`, {
+                    method: 'DELETE',
                 })
                 .then(response => response.json())
-                .then(() => {
-                    alert('Task added successfully');
-                    fetchTasks();
+                .then(data => {
+                    if (data.error) {
+                        alert(`Error: ${data.error}`);
+                    } else {
+                        alert('Tarea eliminada');
+                        fetchTasks(); // Recargar la lista de tareas
+                    }
                 })
-                .catch(error => console.error('Error adding task:', error));
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Ocurrió un error al eliminar la tarea.');
+                });
+            }
+        }
+        // Función para editar una tarea (prepara el formulario para la edición)
+        function editTask(id, title, description, status) {
+            document.getElementById('task-title').value = title;
+            document.getElementById('task-desc').value = description;
+            document.getElementById('task-status').value = status;
+
+            // Cambiar el botón de crear a actualizar
+            const createButton = document.querySelector('.task-form button');
+            createButton.textContent = 'Actualizar Tarea';
+            createButton.onclick = function() {
+                updateTask(id);
+            };
+        }
+        // Función para actualizar una tarea
+        function updateTask(id) {
+            const title = document.getElementById('task-title').value;
+            const description = document.getElementById('task-desc').value;
+            const status = document.getElementById('task-status').value;
+
+            const taskData = {
+                title: title,
+                description: description,
+                status: status
+            };
+
+            fetch(`${apiBaseUrl}/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(taskData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert('Tarea actualizada exitosamente');
+                fetchTasks(); // Recargar la lista de tareas
+
+                // Volver a cambiar el botón a "Crear Tarea"
+                const createButton = document.querySelector('.task-form button');
+                createButton.textContent = 'Crear Tarea';
+                createButton.onclick = createTask;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Ocurrió un error al actualizar la tarea.');
             });
-
-            // Update Task
-            document.querySelector('#updateTaskForm').addEventListener('submit', event => {
-                event.preventDefault();
-                const id = document.querySelector('#taskId').value;
-                const title = document.querySelector('#updateTitle').value;
-                const description = document.querySelector('#updateDescription').value;
-                const status = document.querySelector('#updateStatus').value;
-
-                fetch(`${apiUrl}/tasks/${id}`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ title, description, status })
-                })
-                .then(response => response.json())
-                .then(() => {
-                    alert('Task updated successfully');
-                    fetchTasks();
-                })
-                .catch(error => console.error('Error updating task:', error));
-            });
-
-            // Delete Task
-            document.querySelector('#deleteTaskForm').addEventListener('submit', event => {
-                event.preventDefault();
-                const id = document.querySelector('#deleteTaskId').value;
-
-                fetch(`${apiUrl}/tasks/${id}`, {
-                    method: 'DELETE'
-                })
-                .then(response => response.json())
-                .then(() => {
-                    alert('Task deleted successfully');
-                    fetchTasks();
-                })
-                .catch(error => console.error('Error deleting task:', error));
-            });
-
-            // Initial fetch of tasks
-            fetchTasks();
-        });
+        }
+        // Inicializar la carga de tareas al cargar la página
+                function loadTaskForEditing(id, title, description, status) {
+            document.getElementById('edit-id').value = id;
+            document.getElementById('edit-title').value = title;
+            document.getElementById('edit-desc').value = description;
+            document.getElementById('edit-status').value = status;
+        }
     </script>
+
 </body>
 </html>

@@ -1,23 +1,23 @@
 <?php
-// Configuración de la base de datos
-$host = 'localhost'; // Cambia esto por tu host si no es localhost
-$port = '5432';      // El puerto por defecto de PostgreSQL
-$dbname = 'task_manager'; // Reemplaza con el nombre de tu base de datos
-$user = 'root1'; // Reemplaza con tu nombre de usuario
-$password = 'admin123'; // Reemplaza con tu contraseña
+class Database {
+    private $host = 'localhost';
+    private $db_name = 'task_manager';
+    private $username = 'root1';
+    private $password = 'admin123'; 
+      private $pdo;
 
-// Crear una cadena de conexión
-$connection_string = "host=$host port=$port dbname=$dbname user=$user password=$password";
+    public function connect() {
+        $this->pdo = null;
 
-// Intentar conectar a la base de datos
-$dbconn = pg_connect($connection_string);
+        try {
+            $dsn = "pgsql:host={$this->host};dbname={$this->db_name}";
+            $this->pdo = new PDO($dsn, $this->username, $this->password);
+            $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        } catch (PDOException $e) {
+            echo 'Connection Error: ' . $e->getMessage();
+        }
 
-// Verificar la conexión
-if ($dbconn) {
-    echo "Conexión exitosa a la base de datos PostgreSQL!";
-} else {
-    echo "Error al conectar a la base de datos PostgreSQL.";
+        return $this->pdo;
+    }
 }
 
-
-?>
